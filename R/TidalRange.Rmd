@@ -1,0 +1,201 @@
+---
+title: "SWMP_Tidal_Range & MLW depth at each station"
+author: "Katie Petrinec"
+date: "2/17/2022", Updated: "05/30/2025"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE) 
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r install packages}
+library(here)
+library(SWMPr)
+library(dplyr)
+```
+
+## Load data
+
+```{r load data, echo=FALSE}
+dfPI <- import_local(here("data"), 'gtmpiwq', trace=T)
+
+dfSS <- import_local(here("data"), 'gtmsswq', trace=T)
+
+dfFM <- import_local(here("data"), 'gtmfmwq', trace=T)
+
+dfPC <- import_local(here("data"), 'gtmpcwq', trace=T)
+
+dfPCDepth <- import_local(here("data", "PCcorrectedForDepth"), 'gtmpcwq', trace=T)
+
+#Check column data types
+sapply(dfPI, class)
+sapply(dfSS, class)
+sapply(dfFM, class)
+sapply(dfPC, class)
+```
+
+##Create a new dataframe to work with
+
+```{r new dataframe, echo=FALSE}
+dPI<-dfPI
+dSS<-dfSS
+dFM<-dfFM
+dPC<-dfPC
+dPCDepth<-dfPCDepth
+```
+
+##Assign d$datetimestamp to variable d$Date
+
+```{r create date column, echo=FALSE}
+dPI$Date <- format(dPI$datetimestamp, "%y-%m-%d",tz="EST")
+
+dSS$Date <- format(dSS$datetimestamp, "%y-%m-%d",tz="EST")
+
+dFM$Date <- format(dFM$datetimestamp, "%y-%m-%d",tz="EST")
+
+dPC$Date <- format(dPC$datetimestamp, "%y-%m-%d",tz="EST")
+
+dPCDepth$Date <- format(dPCDepth$datetimestamp, "%y-%m-%d",tz="EST")
+```
+
+# get MLW values
+
+```{r MLW - 2 lowest cdepth readings each day, echo=FALSE}
+PIMLW <- dPI %>%
+  group_by(Date) %>%   # Group by date
+  slice_min(cdepth, n = 2)  # Select the two lowest values within each group
+
+SSMLW <- dSS %>%
+  group_by(Date) %>%   # Group by date
+  slice_min(cdepth, n = 2)  # Select the two lowest values within each group
+
+FMMLW <- dFM %>%
+  group_by(Date) %>%   # Group by date
+  slice_min(cdepth, n = 2)  # Select the two lowest values within each group
+
+PCMLW <- dPC %>%
+  group_by(Date) %>%   # Group by date
+  slice_min(cdepth, n = 2)  # Select the two lowest values within each group
+
+PCDepthMLW <- dPCDepth %>%
+  group_by(Date) %>%   # Group by date
+  slice_min(depth, n = 2)  # Select the two lowest values within each group
+```
+
+
+
+##Aggregate data and run the max function assign to variable
+
+```{r aggregate data - max function, echo=FALSE}
+PImax <- aggregate(cbind("cdepth.max"=cdepth)~dPI$Date, data=dPI, FUN=max)
+
+SSmax <- aggregate(cbind("cdepth.max"=cdepth)~dSS$Date, data=dSS, FUN=max)
+
+FMmax <- aggregate(cbind("cdepth.max"=cdepth)~dFM$Date, data=dFM, FUN=max)
+
+PCmax <- aggregate(cbind("clevel.max"=clevel)~dPC$Date, data=dPC, FUN=max)
+```
+
+##Aggregate data and run the min function assign to variable
+
+```{r aggregate data - min function, echo=FALSE}
+PImin <- aggregate(cbind("cdepth.min"=cdepth)~dPI$Date, data=dPI, FUN=min)
+
+SSmin <- aggregate(cbind("cdepth.min"=cdepth)~dSS$Date, data=dSS, FUN=min)
+
+FMmin <- aggregate(cbind("cdepth.min"=cdepth)~dFM$Date, data=dFM, FUN=min)
+
+PCmin <- aggregate(cbind("clevel.min"=clevel)~dPC$Date, data=dPC, FUN=min)
+```
+
+##check max and min data to make sure the column length is the same
+
+```{r check data, echo=FALSE}
+summary(PImax)
+summary(PImin)
+
+summary(SSmax)
+summary(SSmin)
+
+summary(FMmax)
+summary(FMmin)
+
+summary(PCmax)
+summary(PCmin)
+```
+
+##Bind data together into one dataframe
+
+```{r bind data, echo=FALSE}
+allPIData<-cbind(PImax, cdepth.min = PImin$cdepth.min)
+
+allSSData<-cbind(SSmax, cdepth.min = SSmin$cdepth.min)
+
+allFMData<-cbind(FMmax, cdepth.min = FMmin$cdepth.min)
+
+allPCData<-cbind(PCmax, clevel.min = PCmin$clevel.min)
+```
+
+##Subtract max and min columns
+
+```{r difference, echo=FALSE}
+allPIData$difference <- (allPIData$cdepth.max - allPIData$cdepth.min)
+
+allSSData$difference <- (allSSData$cdepth.max - allSSData$cdepth.min)
+
+allFMData$difference <- (allFMData$cdepth.max - allFMData$cdepth.min)
+
+allPCData$difference <- (allPCData$clevel.max - allPCData$clevel.min)
+```
+
+##Average difference column
+
+```{r average difference, echo=FALSE}
+PITidalRange<-mean(allPIData$difference, na.rm = TRUE)
+
+SSTidalRange<-mean(allSSData$difference, na.rm = TRUE)
+
+FMTidalRange<-mean(allFMData$difference, na.rm = TRUE)
+
+PCTidalRange<-mean(allPCData$difference, na.rm = TRUE)
+```
+
+##Output average difference/tidal range
+
+```{r average difference, echo=FALSE}
+PITidalRange
+
+SSTidalRange
+
+FMTidalRange
+
+PCTidalRange
+```
+
+#calculate average depth for metadata
+
+```{r average cdepth, echo=FALSE}
+summary(dPI$cdepth)
+summary(dSS$cdepth)
+summary(dFM$cdepth)
+summary(dPC$cdepth)
+```
+
+#calculate average MLW depth for metadata
+```{r average MLW cdepth, echo=FALSE}
+summary(PIMLW$cdepth)
+summary(SSMLW$cdepth)
+summary(FMMLW$cdepth)
+summary(PCDepthMLW$depth)
+```
