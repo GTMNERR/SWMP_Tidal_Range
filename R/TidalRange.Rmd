@@ -104,6 +104,8 @@ SSmax <- aggregate(cbind("cdepth.max"=cdepth)~dSS$Date, data=dSS, FUN=max)
 
 FMmax <- aggregate(cbind("cdepth.max"=cdepth)~dFM$Date, data=dFM, FUN=max)
 
+PCmax_depth <- aggregate(cbind("cdepth.max"=cdepth)~dPCDepth$Date, data=dPCDepth, FUN=max)
+
 PCmax <- aggregate(cbind("clevel.max"=clevel)~dPC$Date, data=dPC, FUN=max)
 ```
 
@@ -115,6 +117,8 @@ PImin <- aggregate(cbind("cdepth.min"=cdepth)~dPI$Date, data=dPI, FUN=min)
 SSmin <- aggregate(cbind("cdepth.min"=cdepth)~dSS$Date, data=dSS, FUN=min)
 
 FMmin <- aggregate(cbind("cdepth.min"=cdepth)~dFM$Date, data=dFM, FUN=min)
+
+PCmin_depth <- aggregate(cbind("cdepth.min"=cdepth)~dPCDepth$Date, data=dPCDepth, FUN=min)
 
 PCmin <- aggregate(cbind("clevel.min"=clevel)~dPC$Date, data=dPC, FUN=min)
 ```
@@ -131,6 +135,9 @@ summary(SSmin)
 summary(FMmax)
 summary(FMmin)
 
+summary(PCmax_depth)
+summary(PCmin_depth)
+
 summary(PCmax)
 summary(PCmin)
 ```
@@ -144,6 +151,8 @@ allSSData<-cbind(SSmax, cdepth.min = SSmin$cdepth.min)
 
 allFMData<-cbind(FMmax, cdepth.min = FMmin$cdepth.min)
 
+allPCData_depth<-cbind(PCmax_depth, cdepth.min = PCmin_depth$cdepth.min)
+
 allPCData<-cbind(PCmax, clevel.min = PCmin$clevel.min)
 ```
 
@@ -155,6 +164,8 @@ allPIData$difference <- (allPIData$cdepth.max - allPIData$cdepth.min)
 allSSData$difference <- (allSSData$cdepth.max - allSSData$cdepth.min)
 
 allFMData$difference <- (allFMData$cdepth.max - allFMData$cdepth.min)
+
+allPCData_depth$difference <- (allPCData_depth$cdepth.max - allPCData_depth$cdepth.min)
 
 allPCData$difference <- (allPCData$clevel.max - allPCData$clevel.min)
 ```
@@ -168,6 +179,8 @@ SSTidalRange<-mean(allSSData$difference, na.rm = TRUE)
 
 FMTidalRange<-mean(allFMData$difference, na.rm = TRUE)
 
+PCTidalRange_depth<-mean(allPCData_depth$difference, na.rm = TRUE)
+
 PCTidalRange<-mean(allPCData$difference, na.rm = TRUE)
 ```
 
@@ -180,6 +193,8 @@ SSTidalRange
 
 FMTidalRange
 
+PCTidalRange_depth
+
 PCTidalRange
 ```
 
@@ -189,6 +204,7 @@ PCTidalRange
 summary(dPI$cdepth)
 summary(dSS$cdepth)
 summary(dFM$cdepth)
+summary(dPCDepth$cdepth)
 summary(dPC$cdepth)
 ```
 
